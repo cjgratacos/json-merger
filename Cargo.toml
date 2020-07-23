@@ -1,0 +1,10 @@
+[package]
+name = "json-merger"
+version = "0.1.0"
+authors = ["cjgratacos"]
+edition = "2018"
+
+[dependencies]
+structopt = "^0.3"
+log = "^0.4"
+simple_logger="^1.6"
