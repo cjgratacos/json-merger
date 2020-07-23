@@ -12,9 +12,12 @@ const COMMA: u8 = 44;
 
 #[derive(StructOpt, Debug)]
 pub struct Cli {
-    #[structopt(parse(from_os_str))]
     /// The path where the json collection lies
+    #[structopt(parse(from_os_str))]
     pub path: PathBuf,
+    /// The filename to use, without the suffix
+    #[structopt(short, long)]
+    pub filename: Option<String>,
     /// Activate debug mode
     #[structopt(short, long)]
     pub debug: bool,
@@ -41,7 +44,7 @@ fn main() {
     match validate_path(path) {
         Ok(_) => {
             info!("Path or sub-paths contains Json. [Path:{}]", path.to_str().unwrap());
-            process(path);
+            process(&cli, path);
         },
         Err(s) => {
             error!("{}", s);
@@ -49,7 +52,7 @@ fn main() {
     };
 }
 
-fn process(path: &Path) {
+fn process(cli: &Cli, path: &Path) {
     let p = path.to_str().unwrap();
    info!("Begin Processing path: {}", p);
    let mut files = Vec::new();
@@ -59,7 +62,7 @@ fn process(path: &Path) {
        let entry_str = entry_path.to_str().unwrap();
        if entry_path.is_dir() {
            debug!("Path[{}] is a sub folder", entry_str);
-           process(&entry_path);
+           process(cli, &entry_path);
        } else if entry_path.is_file() && entry_str.to_lowercase().ends_with(".json") {
            debug!("Path[{}] is a file", entry_str);
            files.push(entry_str.to_string());
@@ -70,7 +73,11 @@ fn process(path: &Path) {
 
    info!("Found {} json files in path: {}", files.len(), p);
    if !files.is_empty() {
-       let filename = &format!("{}/{}.json", path.to_str().unwrap(), path.file_name().unwrap().to_str().unwrap());
+       let filename = &format!(
+               "{}/{}.json",
+               path.to_str().unwrap(),
+               cli.filename.as_ref().map(|x|x.as_str()).or(path.file_name().unwrap().to_str()).unwrap()
+            );
 
        debug!("Sorting files: {:?}", files);
        files.sort();
